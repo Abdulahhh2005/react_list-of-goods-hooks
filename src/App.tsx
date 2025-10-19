@@ -1,10 +1,21 @@
-import React, { useState } from 'react';
 import 'bulma/css/bulma.css';
 import './App.scss';
-import { SortParams } from './types/SortParams';
-import { SortType } from './types/SortType';
 
-export const goodsFromServer = [
+import { useState } from 'react';
+
+// Enum для возможных вариантов сортировки
+export enum SortType {
+  Alphabet = 'alphabet',
+  Length = 'length',
+  Reverse = 'reverse',
+  Reset = 'reset',
+}
+
+// Тип для одного товара
+type Good = string;
+
+// Исходный массив
+export const goodsFromServer: Good[] = [
   'Dumplings',
   'Carrot',
   'Eggs',
@@ -17,96 +28,86 @@ export const goodsFromServer = [
   'Garlic',
 ];
 
-function getPreparedGoods(goods: string[], sortParams: SortParams): string[] {
-  let preparedGoods = [...goods];
-
-  if (sortParams) {
-    if (sortParams.sort === SortType.Alphabet) {
-      preparedGoods = preparedGoods.sort((good1, good2) =>
-        good1.localeCompare(good2),
-      );
-    } else if (sortParams.sort === SortType.Length) {
-      preparedGoods = preparedGoods.sort(
-        (good1, good2) => good1.length - good2.length,
-      );
-    }
-
-    if (sortParams.reverse === true) {
-      preparedGoods.reverse();
-    }
-  }
-
-  return preparedGoods;
-}
-
 export const App: React.FC = () => {
-  const [sortParams, setSortParams] = useState<SortParams>({
-    sort: SortType.Default,
-    reverse: false,
-  });
-  const visibleGoods = getPreparedGoods(goodsFromServer, sortParams);
+  const [goods, setGoods] = useState<Good[]>(goodsFromServer);
+  const [activeSort, setActiveSort] = useState<SortType | ''>('');
+  const [isReversed, setIsReversed] = useState<boolean>(false);
 
-  const handleSortAlphabetically = () => {
-    setSortParams(p => ({ ...p, sort: SortType.Alphabet }));
+  const handleAction = (type: SortType) => {
+    switch (type) {
+      case SortType.Alphabet:
+      case SortType.Length: {
+        // const sorted = [...goods].sort(
+        //   type === 'alphabet'
+        //     ? (a, b) => a.localeCompare(b)
+        //     : (a, b) => a.length - b.length,
+        // );
+
+        const sorted = [...goodsFromServer].sort(
+          type === SortType.Alphabet
+            ? (a, b) => a.localeCompare(b)
+            : (a, b) => a.length - b.length,
+        );
+
+        setGoods(isReversed ? sorted.reverse() : sorted);
+        setActiveSort(type);
+        break;
+      }
+
+      case SortType.Reverse:
+        setGoods(prevGoods => [...prevGoods].reverse());
+        setIsReversed(prev => !prev);
+        break;
+
+      case SortType.Reset:
+        setGoods(goodsFromServer);
+        setActiveSort('');
+        setIsReversed(false);
+        break;
+
+      default:
+        break;
+    }
   };
 
-  const handleSortByLength = () => {
-    setSortParams(p => ({ ...p, sort: SortType.Length }));
-  };
-
-  const handleToggleReverse = () => {
-    setSortParams(p => ({ ...p, reverse: !p.reverse }));
-  };
-
-  const reset = () => {
-    setSortParams({ sort: SortType.Default, reverse: false });
-  };
+  const isChanged = goods.join() !== goodsFromServer.join();
 
   return (
     <div className="section content">
       <div className="buttons">
         <button
           type="button"
-          className={
-            sortParams.sort === SortType.Alphabet
-              ? 'button is-info'
-              : 'button is-info is-light'
-          }
-          onClick={handleSortAlphabetically}
+          className={`button is-info ${
+            activeSort === SortType.Alphabet ? '' : 'is-light'
+          }`}
+          onClick={() => handleAction(SortType.Alphabet)}
         >
           Sort alphabetically
         </button>
 
         <button
           type="button"
-          className={
-            sortParams.sort === SortType.Length
-              ? 'button is-success'
-              : 'button is-success is-light'
-          }
-          onClick={handleSortByLength}
+          className={`button is-success ${
+            activeSort === SortType.Length ? '' : 'is-light'
+          }`}
+          onClick={() => handleAction(SortType.Length)}
         >
           Sort by length
         </button>
 
         <button
           type="button"
-          className={
-            sortParams.reverse === true
-              ? 'button is-warning'
-              : 'button is-warning is-light'
-          }
-          onClick={handleToggleReverse}
+          className={`button is-warning ${isReversed ? '' : 'is-light'}`}
+          onClick={() => handleAction(SortType.Reverse)}
         >
           Reverse
         </button>
 
-        {(sortParams.sort !== SortType.Default ||
-          sortParams.reverse === true) && (
+        {isChanged && (
           <button
             type="button"
-            className="button is-danger is-light"
-            onClick={reset}
+            className="button is-danger"
+            onClick={() => handleAction(SortType.Reset)}
           >
             Reset
           </button>
@@ -114,8 +115,8 @@ export const App: React.FC = () => {
       </div>
 
       <ul>
-        {visibleGoods.map(good => (
-          <li key={good} data-cy="Good">
+        {goods.map(good => (
+          <li data-cy="Good" key={good}>
             {good}
           </li>
         ))}
