@@ -5,6 +5,7 @@ import { useState } from 'react';
 
 // Enum для возможных вариантов сортировки
 export enum SortType {
+  Default = 'default',
   Alphabet = 'alphabet',
   Length = 'length',
   Reverse = 'reverse',
@@ -30,7 +31,7 @@ export const goodsFromServer: Good[] = [
 
 export const App: React.FC = () => {
   const [goods, setGoods] = useState<Good[]>(goodsFromServer);
-  const [activeSort, setActiveSort] = useState<SortType | ''>('');
+  const [activeSort, setActiveSort] = useState<SortType>(SortType.Default);
   const [isReversed, setIsReversed] = useState<boolean>(false);
 
   const handleAction = (type: SortType) => {
@@ -61,7 +62,7 @@ export const App: React.FC = () => {
 
       case SortType.Reset:
         setGoods(goodsFromServer);
-        setActiveSort('');
+        setActiveSort(SortType.Default);
         setIsReversed(false);
         break;
 
